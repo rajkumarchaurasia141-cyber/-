@@ -1,0 +1,156 @@
+@import "tailwindcss";
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
+  }
+
+  body {
+    overscroll-behavior-y: none;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+/* Page canvas realistic paper styling */
+.document-page-canvas {
+  background-color: #ffffff;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease-in-out;
+  outline: none;
+  min-height: 297mm;
+  position: relative;
+}
+
+/* Content Editable Surface */
+.editable-content {
+  min-height: 240mm;
+  outline: none;
+  word-break: break-word;
+  line-height: 1.6;
+}
+
+.editable-content:empty:before {
+  content: "Tap here to start typing your document...";
+  color: #94a3b8;
+  font-style: italic;
+  pointer-events: none;
+}
+
+/* Multi-column layout styles */
+.doc-columns-1 {
+  column-count: 1;
+}
+
+.doc-columns-2 {
+  column-count: 2;
+}
+
+.doc-columns-3 {
+  column-count: 3;
+}
+
+.doc-columns-4 {
+  column-count: 4;
+}
+
+.doc-columns-5 {
+  column-count: 5;
+}
+
+/* Column break helper */
+.column-break {
+  break-before: column;
+  page-break-before: column;
+  height: 0;
+  margin: 0;
+}
+
+/* Table styling in editor */
+.editable-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  table-layout: auto;
+}
+
+.editable-content th,
+.editable-content td {
+  border: 1px solid #cbd5e1;
+  padding: 8px 10px;
+  min-width: 48px;
+  position: relative;
+}
+
+.editable-content th {
+  background-color: #f8fafc;
+  font-weight: 600;
+}
+
+.editable-content td:focus,
+.editable-content th:focus {
+  outline: 2px solid #3b82f6;
+  background-color: #eff6ff;
+}
+
+/* Interactive Image Container */
+.doc-image-wrapper {
+  display: inline-block;
+  margin: 8px 0;
+  max-width: 100%;
+  position: relative;
+}
+
+.doc-image-wrapper img {
+  border-radius: 4px;
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Print Media Optimization */
+@media print {
+  body {
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .no-print,
+  .mobile-toolbar,
+  .top-toolbar,
+  .bottom-sheet-overlay,
+  .dashboard-header,
+  .floating-controls {
+    display: none !important;
+  }
+
+  .document-page-canvas {
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    min-height: auto !important;
+  }
+
+  .editable-content {
+    min-height: auto !important;
+  }
+}
