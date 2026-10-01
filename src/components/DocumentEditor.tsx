@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   DocumentData,
   ActiveSheet,
@@ -25,9 +25,10 @@ import { FindReplaceModal } from './sheets/FindReplaceModal';
 import { StatsModal } from './sheets/StatsModal';
 import { SettingsModal } from './sheets/SettingsModal';
 import { CommandPalette } from './sheets/CommandPalette';
+import { DownloadModal } from './sheets/DownloadModal';
 import { saveDocument } from '../services/storage';
 import { exportAsPdf, exportAsDocx, exportAsTxt, exportAsHtml } from '../services/export';
-import { executeCommand, restoreSelection, saveSelection } from '../utils/editorCommands';
+import { executeCommand } from '../utils/editorCommands';
 import confetti from 'canvas-confetti';
 
 interface DocumentEditorProps {
@@ -37,7 +38,11 @@ interface DocumentEditorProps {
 
 export const DocumentEditor: React.FC<DocumentEditorProps> = ({ initialDocument, onBack }) => {
   const [doc, setDoc] = useState<DocumentData>(initialDocument);
+  const docRef = useRef<DocumentData>(initialDocument);
+  docRef.current = doc;
+
   const [activeSheet, setActiveSheet] = useState<ActiveSheet>(null);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'saving' | 'saved' | 'saved_just_now'>('saved');
   const [zoom, setZoom] = useState(100);
   const [isFocusMode, setIsFocusMode] = useState(false);
@@ -65,78 +70,89 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({ initialDocument,
         console.error('Failed to autosave:', err);
         setSaveStatus('saved');
       }
-    }, 1200);
+    }, 1000);
   }, []);
 
-  const handleContentChange = (newHtml: string) => {
-    const updated: DocumentData = {
-      ...doc,
-      content: newHtml,
-      updatedAt: Date.now(),
-    };
-    setDoc(updated);
-    triggerAutosave(updated);
-  };
+  const handleContentChange = useCallback((newHtml: string) => {
+    setDoc((prev) => {
+      const updated: DocumentData = {
+        ...prev,
+        content: newHtml,
+        updatedAt: Date.now(),
+      };
+      triggerAutosave(updated);
+      return updated;
+    });
+  }, [triggerAutosave]);
 
-  const handleUpdateTitle = (newTitle: string) => {
-    const updated: DocumentData = {
-      ...doc,
-      title: newTitle,
-      updatedAt: Date.now(),
-    };
-    setDoc(updated);
-    triggerAutosave(updated);
-  };
+  const handleUpdateTitle = useCallback((newTitle: string) => {
+    setDoc((prev) => {
+      const updated: DocumentData = {
+        ...prev,
+        title: newTitle,
+        updatedAt: Date.now(),
+      };
+      triggerAutosave(updated);
+      return updated;
+    });
+  }, [triggerAutosave]);
 
-  const handleUpdateColumns = (columnSettings: ColumnSettings) => {
-    const updated: DocumentData = {
-      ...doc,
-      columnSettings,
-      updatedAt: Date.now(),
-    };
-    setDoc(updated);
-    triggerAutosave(updated);
-  };
+  const handleUpdateColumns = useCallback((columnSettings: ColumnSettings) => {
+    setDoc((prev) => {
+      const updated: DocumentData = {
+        ...prev,
+        columnSettings,
+        updatedAt: Date.now(),
+      };
+      triggerAutosave(updated);
+      return updated;
+    });
+  }, [triggerAutosave]);
 
-  const handleUpdatePageSetup = (pageSettings: PageSettings) => {
-    const updated: DocumentData = {
-      ...doc,
-      pageSettings,
-      updatedAt: Date.now(),
-    };
-    setDoc(updated);
-    triggerAutosave(updated);
-  };
+  const handleUpdatePageSetup = useCallback((pageSettings: PageSettings) => {
+    setDoc((prev) => {
+      const updated: DocumentData = {
+        ...prev,
+        pageSettings,
+        updatedAt: Date.now(),
+      };
+      triggerAutosave(updated);
+      return updated;
+    });
+  }, [triggerAutosave]);
 
-  const handleUpdateHeaderFooter = (headerFooterSettings: HeaderFooterSettings) => {
-    const updated: DocumentData = {
-      ...doc,
-      headerFooterSettings,
-      updatedAt: Date.now(),
-    };
-    setDoc(updated);
-    triggerAutosave(updated);
-  };
+  const handleUpdateHeaderFooter = useCallback((headerFooterSettings: HeaderFooterSettings) => {
+    setDoc((prev) => {
+      const updated: DocumentData = {
+        ...prev,
+        headerFooterSettings,
+        updatedAt: Date.now(),
+      };
+      triggerAutosave(updated);
+      return updated;
+    });
+  }, [triggerAutosave]);
 
   // Export handlers
-  const handlePrint = () => {
-    exportAsPdf(doc);
-  };
+  const handlePrint = useCallback(() => {
+    exportAsPdf(docRef.current);
+  }, []);
 
-  const handleExport = (type: 'pdf' | 'docx' | 'txt' | 'html') => {
+  const handleExport = useCallback((type: 'pdf' | 'docx' | 'txt' | 'html') => {
+    const current = docRef.current;
     if (type === 'pdf') {
-      exportAsPdf(doc);
+      exportAsPdf(current);
     } else if (type === 'docx') {
-      exportAsDocx(doc);
+      exportAsDocx(current);
       confetti({ particleCount: 40, spread: 60, origin: { y: 0.8 } });
     } else if (type === 'txt') {
-      exportAsTxt(doc);
+      exportAsTxt(current);
     } else if (type === 'html') {
-      exportAsHtml(doc);
+      exportAsHtml(current);
     }
-  };
+  }, []);
 
-  // Keyboard shortcuts listener
+  // Keyboard shortcuts listener - attached ONCE for butter-smooth execution
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && !e.shiftKey) {
@@ -151,13 +167,16 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({ initialDocument,
           executeCommand('underline');
         } else if (e.key === 's' || e.key === 'S') {
           e.preventDefault();
-          saveDocument(doc).then(() => {
+          saveDocument(docRef.current).then(() => {
             setSaveStatus('saved_just_now');
             setTimeout(() => setSaveStatus('saved'), 2000);
           });
         } else if (e.key === 'p' || e.key === 'P') {
           e.preventDefault();
           handlePrint();
+        } else if (e.key === 'd' || e.key === 'D') {
+          e.preventDefault();
+          setShowDownloadModal(true);
         } else if (e.key === 'f' || e.key === 'F') {
           e.preventDefault();
           setActiveSheet('findReplace');
@@ -169,21 +188,33 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({ initialDocument,
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [doc]);
+  }, [handlePrint]);
 
-  // Calculate live statistics
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = doc.content;
-  const rawText = (tempDiv.textContent || tempDiv.innerText || '').trim();
-  const wordList = rawText.split(/\s+/).filter(Boolean);
-  const stats: DocumentStats = {
-    words: wordList.length,
-    characters: rawText.length,
-    charactersWithoutSpaces: rawText.replace(/\s+/g, '').length,
-    paragraphs: (doc.content.match(/<(p|h[1-6]|li|blockquote)[^>]*>/gi) || []).length || 1,
-    pages: Math.max(1, Math.ceil(wordList.length / 450)),
-    readingTimeMinutes: wordList.length / 200,
-  };
+  // Compute live statistics only when needed (e.g. for stats modal)
+  const stats = useMemo<DocumentStats>(() => {
+    if (activeSheet !== 'stats') {
+      return {
+        words: doc.wordCount || 0,
+        characters: 0,
+        charactersWithoutSpaces: 0,
+        paragraphs: 1,
+        pages: 1,
+        readingTimeMinutes: 1,
+      };
+    }
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = doc.content;
+    const rawText = (tempDiv.textContent || tempDiv.innerText || '').trim();
+    const wordList = rawText.split(/\s+/).filter(Boolean);
+    return {
+      words: wordList.length,
+      characters: rawText.length,
+      charactersWithoutSpaces: rawText.replace(/\s+/g, '').length,
+      paragraphs: (doc.content.match(/<(p|h[1-6]|li|blockquote)[^>]*>/gi) || []).length || 1,
+      pages: Math.max(1, Math.ceil(wordList.length / 450)),
+      readingTimeMinutes: Math.max(1, Math.round(wordList.length / 200)),
+    };
+  }, [activeSheet, doc.content, doc.wordCount]);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-slate-100 select-text">
@@ -197,6 +228,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({ initialDocument,
           onOpenSheet={setActiveSheet}
           onPrint={handlePrint}
           onExport={handleExport}
+          onOpenDownloadModal={() => setShowDownloadModal(true)}
           zoom={zoom}
           onZoomChange={setZoom}
           isFocusMode={isFocusMode}
@@ -226,7 +258,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({ initialDocument,
         />
       )}
 
-      {/* Main Canvas Document Area */}
+      {/* Main Canvas Document Area (A4 Standard) */}
       <Canvas
         document={doc}
         onContentChange={handleContentChange}
@@ -239,10 +271,19 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({ initialDocument,
       {!isFocusMode && (
         <MobileBottomBar
           onOpenSheet={setActiveSheet}
+          onOpenDownloadModal={() => setShowDownloadModal(true)}
           activeSheet={activeSheet}
           activeFontName={currentFontName}
           activeFontSize={currentFontSize}
           columnCount={doc.columnSettings.count}
+        />
+      )}
+
+      {/* Download / Export Modal */}
+      {showDownloadModal && (
+        <DownloadModal
+          document={doc}
+          onClose={() => setShowDownloadModal(false)}
         />
       )}
 

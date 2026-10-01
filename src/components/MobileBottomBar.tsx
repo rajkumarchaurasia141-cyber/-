@@ -12,12 +12,14 @@ import {
   Shapes,
   Search,
   Heading,
+  Download,
 } from 'lucide-react';
 import { executeCommand, saveSelection } from '../utils/editorCommands';
 import { ActiveSheet } from '../../types/document';
 
 interface MobileBottomBarProps {
   onOpenSheet: (sheet: ActiveSheet) => void;
+  onOpenDownloadModal: () => void;
   activeSheet: ActiveSheet;
   activeFontName: string;
   activeFontSize: number;
@@ -26,6 +28,7 @@ interface MobileBottomBarProps {
 
 export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
   onOpenSheet,
+  onOpenDownloadModal,
   activeSheet,
   activeFontName,
   activeFontSize,
@@ -44,6 +47,16 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
   return (
     <div className="no-print mobile-toolbar fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 px-2 py-1.5 shadow-lg">
       <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
+        {/* DIRECT DOWNLOAD BUTTON ON MOBILE */}
+        <button
+          onClick={onOpenDownloadModal}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold shrink-0 shadow-xs active:scale-95 transition-all"
+          title="दस्तावेज़ डाउनलोड करें (PDF / DOCX)"
+        >
+          <Download className="w-4 h-4" />
+          <span>डाउनलोड</span>
+        </button>
+
         {/* SPECIAL HIGHLIGHTED COLUMNS BUTTON */}
         <button
           onClick={() => handleOpen('columns')}

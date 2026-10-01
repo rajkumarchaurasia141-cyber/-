@@ -24,6 +24,7 @@ import {
   Columns,
 } from 'lucide-react';
 import { exportAsPdf, exportAsDocx, exportAsTxt } from '../services/export';
+import { DownloadModal } from './sheets/DownloadModal';
 import confetti from 'canvas-confetti';
 
 interface DashboardProps {
@@ -48,6 +49,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [search, setSearch] = useState('');
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [renamingDoc, setRenamingDoc] = useState<{ id: string; title: string } | null>(null);
+  const [downloadModalDoc, setDownloadModalDoc] = useState<DocumentData | null>(null);
 
   // Template icon resolver
   const getTemplateIcon = (iconName: string) => {
@@ -283,87 +285,87 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           </div>
                         </div>
 
-                        {/* More Menu Trigger */}
-                        <div className="relative" onClick={(e) => e.stopPropagation()}>
+                        {/* Direct Download & More Menu */}
+                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                           <button
-                            onClick={() =>
-                              setActiveMenuId(activeMenuId === doc.id ? null : doc.id)
-                            }
-                            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-                            aria-label="Document options"
+                            onClick={() => setDownloadModalDoc(doc)}
+                            className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="दस्तावेज़ डाउनलोड करें (Download A4)"
                           >
-                            <MoreVertical className="w-4 h-4" />
+                            <Download className="w-4 h-4" />
                           </button>
 
-                          {activeMenuId === doc.id && (
-                            <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-slate-200 rounded-xl shadow-xl py-1 z-30 text-xs">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setActiveMenuId(null);
-                                  onOpenDocument(doc);
-                                }}
-                                className="w-full px-3 py-2 flex items-center gap-2 text-slate-700 hover:bg-slate-50 text-left"
-                              >
-                                <ExternalLink className="w-3.5 h-3.5 text-blue-600" /> Open
-                              </button>
-                              <button
-                                onClick={(e) => handleStartRename(doc, e)}
-                                className="w-full px-3 py-2 flex items-center gap-2 text-slate-700 hover:bg-slate-50 text-left"
-                              >
-                                <Edit2 className="w-3.5 h-3.5 text-slate-500" /> Rename
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setActiveMenuId(null);
-                                  onDuplicate(doc.id);
-                                }}
-                                className="w-full px-3 py-2 flex items-center gap-2 text-slate-700 hover:bg-slate-50 text-left"
-                              >
-                                <Copy className="w-3.5 h-3.5 text-slate-500" /> Duplicate
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setActiveMenuId(null);
-                                  exportAsDocx(doc);
-                                }}
-                                className="w-full px-3 py-2 flex items-center gap-2 text-slate-700 hover:bg-slate-50 text-left"
-                              >
-                                <Download className="w-3.5 h-3.5 text-blue-600" /> Export Word
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setActiveMenuId(null);
-                                  exportAsPdf(doc);
-                                }}
-                                className="w-full px-3 py-2 flex items-center gap-2 text-slate-700 hover:bg-slate-50 text-left"
-                              >
-                                <Download className="w-3.5 h-3.5 text-red-600" /> Export PDF
-                              </button>
-                              <button
-                                onClick={(e) => handleShare(doc, e)}
-                                className="w-full px-3 py-2 flex items-center gap-2 text-slate-700 hover:bg-slate-50 text-left"
-                              >
-                                <Share2 className="w-3.5 h-3.5 text-emerald-600" /> Share
-                              </button>
-                              <div className="border-t border-slate-100 my-1" />
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setActiveMenuId(null);
-                                  if (confirm(`Delete "${doc.title}"?`)) {
-                                    onDelete(doc.id);
-                                  }
-                                }}
-                                className="w-full px-3 py-2 flex items-center gap-2 text-red-600 hover:bg-red-50 text-left"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" /> Delete
-                              </button>
-                            </div>
-                          )}
+                          <div className="relative">
+                            <button
+                              onClick={() =>
+                                setActiveMenuId(activeMenuId === doc.id ? null : doc.id)
+                              }
+                              className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                              aria-label="Document options"
+                            >
+                              <MoreVertical className="w-4 h-4" />
+                            </button>
+
+                            {activeMenuId === doc.id && (
+                              <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-slate-200 rounded-xl shadow-xl py-1 z-30 text-xs">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveMenuId(null);
+                                    onOpenDocument(doc);
+                                  }}
+                                  className="w-full px-3 py-2 flex items-center gap-2 text-slate-700 hover:bg-slate-50 text-left"
+                                >
+                                  <ExternalLink className="w-3.5 h-3.5 text-blue-600" /> Open
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveMenuId(null);
+                                    setDownloadModalDoc(doc);
+                                  }}
+                                  className="w-full px-3 py-2 flex items-center gap-2 text-blue-700 font-semibold hover:bg-blue-50 text-left"
+                                >
+                                  <Download className="w-3.5 h-3.5 text-blue-600" /> डाउनलोड (Download)
+                                </button>
+                                <button
+                                  onClick={(e) => handleStartRename(doc, e)}
+                                  className="w-full px-3 py-2 flex items-center gap-2 text-slate-700 hover:bg-slate-50 text-left"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5 text-slate-500" /> Rename
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveMenuId(null);
+                                    onDuplicate(doc.id);
+                                  }}
+                                  className="w-full px-3 py-2 flex items-center gap-2 text-slate-700 hover:bg-slate-50 text-left"
+                                >
+                                  <Copy className="w-3.5 h-3.5 text-slate-500" /> Duplicate
+                                </button>
+                                <button
+                                  onClick={(e) => handleShare(doc, e)}
+                                  className="w-full px-3 py-2 flex items-center gap-2 text-slate-700 hover:bg-slate-50 text-left"
+                                >
+                                  <Share2 className="w-3.5 h-3.5 text-emerald-600" /> Share
+                                </button>
+                                <div className="border-t border-slate-100 my-1" />
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveMenuId(null);
+                                    if (confirm(`Delete "${doc.title}"?`)) {
+                                      onDelete(doc.id);
+                                    }
+                                  }}
+                                  className="w-full px-3 py-2 flex items-center gap-2 text-red-600 hover:bg-red-50 text-left"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" /> Delete
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -422,6 +424,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </form>
         </div>
+      )}
+
+      {/* Download Modal */}
+      {downloadModalDoc && (
+        <DownloadModal
+          document={downloadModalDoc}
+          onClose={() => setDownloadModalDoc(null)}
+        />
       )}
     </div>
   );

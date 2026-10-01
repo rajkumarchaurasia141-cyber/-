@@ -26,6 +26,7 @@ interface EditorTopBarProps {
   onOpenSheet: (sheet: ActiveSheet) => void;
   onPrint: () => void;
   onExport: (type: 'pdf' | 'docx' | 'txt' | 'html') => void;
+  onOpenDownloadModal: () => void;
   zoom: number;
   onZoomChange: (val: number) => void;
   isFocusMode: boolean;
@@ -40,6 +41,7 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
   onOpenSheet,
   onPrint,
   onExport,
+  onOpenDownloadModal,
   zoom,
   onZoomChange,
   isFocusMode,
@@ -125,16 +127,20 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
                 ? 'Saved just now'
                 : 'Saved'}
             </span>
+            <span className="text-slate-300">•</span>
+            <span className="font-semibold text-blue-600 bg-blue-50 px-1.5 py-0.2 rounded text-[9px]">
+              A4 Size
+            </span>
           </div>
         </div>
       </div>
 
       {/* Right: Actions */}
-      <div className="flex items-center gap-1 shrink-0">
+      <div className="flex items-center gap-1.5 shrink-0">
         {/* Undo */}
         <button
           onClick={() => executeCommand('undo')}
-          className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+          className="p-1.5 sm:p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
           title="Undo (Ctrl+Z)"
         >
           <Undo2 className="w-4 h-4" />
@@ -143,10 +149,20 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
         {/* Redo */}
         <button
           onClick={() => executeCommand('redo')}
-          className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+          className="p-1.5 sm:p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
           title="Redo (Ctrl+Y)"
         >
           <Redo2 className="w-4 h-4" />
+        </button>
+
+        {/* PROMINENT DIRECT DOWNLOAD BUTTON */}
+        <button
+          onClick={onOpenDownloadModal}
+          className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-xs active:scale-95 transition-all"
+          title="Download PDF, Word DOCX, TXT"
+        >
+          <Download className="w-3.5 h-3.5" />
+          <span className="text-xs">डाउनलोड</span>
         </button>
 
         {/* Zoom Selector (Hidden on tiny screens) */}
@@ -182,7 +198,7 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setShowMoreMenu(!showMoreMenu)}
-            className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+            className="p-1.5 sm:p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
             aria-label="More options"
           >
             <MoreVertical className="w-4 h-4" />
@@ -193,41 +209,21 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
               <button
                 onClick={() => {
                   setShowMoreMenu(false);
+                  onOpenDownloadModal();
+                }}
+                className="w-full px-4 py-2.5 flex items-center gap-2.5 text-blue-700 font-bold bg-blue-50/50 hover:bg-blue-50 transition-colors"
+              >
+                <Download className="w-4 h-4 text-blue-600" /> डाउनलोड (PDF, DOCX, TXT)
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowMoreMenu(false);
                   onPrint();
                 }}
                 className="w-full px-4 py-2.5 flex items-center gap-2.5 text-slate-700 hover:bg-slate-50 transition-colors"
               >
                 <Printer className="w-4 h-4 text-slate-500" /> Print
-              </button>
-
-              <button
-                onClick={() => {
-                  setShowMoreMenu(false);
-                  onExport('pdf');
-                }}
-                className="w-full px-4 py-2.5 flex items-center gap-2.5 text-slate-700 hover:bg-slate-50 transition-colors"
-              >
-                <Download className="w-4 h-4 text-red-500" /> Export PDF
-              </button>
-
-              <button
-                onClick={() => {
-                  setShowMoreMenu(false);
-                  onExport('docx');
-                }}
-                className="w-full px-4 py-2.5 flex items-center gap-2.5 text-slate-700 hover:bg-slate-50 transition-colors"
-              >
-                <Download className="w-4 h-4 text-blue-500" /> Export Word (DOCX)
-              </button>
-
-              <button
-                onClick={() => {
-                  setShowMoreMenu(false);
-                  onExport('txt');
-                }}
-                className="w-full px-4 py-2.5 flex items-center gap-2.5 text-slate-700 hover:bg-slate-50 transition-colors"
-              >
-                <Download className="w-4 h-4 text-slate-500" /> Export Plain Text
               </button>
 
               <div className="my-1 border-t border-slate-100" />
@@ -239,7 +235,7 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
                 }}
                 className="w-full px-4 py-2.5 flex items-center gap-2.5 text-slate-700 hover:bg-slate-50 transition-colors"
               >
-                <FileSpreadsheet className="w-4 h-4 text-slate-500" /> Page Setup
+                <FileSpreadsheet className="w-4 h-4 text-slate-500" /> Page Setup (A4)
               </button>
 
               <button
